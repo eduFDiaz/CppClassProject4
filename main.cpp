@@ -1,32 +1,45 @@
+// Eduardo A Fernandez
+
+#include "stdafx.h"
+
 #include <iostream>
 #include "BankAccount.h"
-
+#include <vector>
 using namespace std;
 
 void ShowMenu();
 
-void TakeAction(char action, unsigned int naccount, BankAccount *account);
+void TakeAction(char action, unsigned int naccount, vector<BankAccount> &account);
+bool indexOfAccount(unsigned int &index, unsigned int &accountNumber, vector<BankAccount> account);
 
 int main() {
-    BankAccount accounts[10];//An array of bank accounts is created
-    BankAccount *ptr = accounts;//Then a pointer to the first element
+    vector<BankAccount> myList;//Class used to store all the accounts
+    //myList.push_back(BankAccount(0));//Account 0 created by default for debugging purposes
 
     char sentinel;//The sentinel value
     unsigned int naccount;//The second parameter account number
     do {
         ShowMenu();//The menu with the different actions
-        cin >> sentinel >> naccount;
-        TakeAction(sentinel,naccount - 1,ptr);
+        cin >> sentinel;
+        if (sentinel == 'X')
+            break;//No need to call any action
+        cout << "Enter the number of the account to act on: (any positive value)" << endl;
+        cin >> naccount;
+        TakeAction(sentinel, naccount, myList);
         //Comment the line below to see the account in time
         //system("clear");//MacOS & Linux
         //system("CLS");//Windows
     } while (sentinel != 'X');
+
+    for (unsigned int i = 0; i < myList.size(); i++) {
+        myList.at(i).DisplayBalance();
+    }
+
     return 0;
 }
 
 void ShowMenu() {
-    cout << "Enter one of the following characters followed by the account number that you want to create/modify/show\n"
-            "Example: N 1 (to create account 1), W 2 to make a withdraw from account 2, and so on" << endl;
+    cout << "Enter the action character: " << endl;
     cout << "Enter [N] to create a new bank account" << endl;
     cout << "Enter [D] to make a deposit" << endl;
     cout << "Enter [W] to make a withdraw" << endl;
@@ -38,54 +51,77 @@ void ShowMenu() {
     cout << "Enter [X] to finish" << endl;
 }
 
-void TakeAction(char action, unsigned int index, BankAccount *account) {
+void TakeAction(char action, unsigned int accountNumber, vector<BankAccount> &account) {
     //This function performs the requested action from the show Menu
-    if (index < 0 || index >= 10){
-        printf("The account number %d is not valid, try numbers from 1 to 10\n",index+1);
+    if (accountNumber < 0) {
+        printf("The number #%d for the account is invalid, a positive value or zero\n", accountNumber);
         return;
     }
-    float amount;
-    switch (action) {
-        case 'N' : {
-            account[index].setAccountNumber(index);
-            account[index].setAccountStatus(true);
-            printf("Account #%d was created and is active\n",index+1);
-            break;
-        };
-        case 'D' : {
-            cout << "Enter an amount to deposit and press enter: ";
-            cin >> amount; account[index].Deposit(amount);break;
-        };
-        case 'W' : {
-            cout << "Enter an amount to withdraw and press enter: ";
-            cin >> amount; account[index].Withdraw(amount);break;
-        };
-        case 'B' : {
-            account[index].DisplayBalance();break;
-        };
-        case 'I' : {
-            cout << "Enter the interest rate to credit the account and press enter: ";
-            cin >> amount; account[index].setRate(amount);break;
-        };
-        case 'S' : {
-            cout << "Enter the service fee you want to subtract from the account and press enter: ";
-            cin >> amount; account[index].Withdraw(amount);break;
-        };
-        case 'M' : {
-            cout << "The account is inactive now...\n";
-            account[index].setAccountStatus(false);break;
-        };
-        case 'A' : {
-            cout << "The account is active now...\n";
-            account[index].setAccountStatus(true);break;
-        };
-        case 'X' : {
-            for (int i=0; i < 10;i++){
-                account[i].DisplayBalance();
-            }break;
-        }
-        default: {
-            cout << "Enter a valid option" << endl; break;;
-        };
+
+    unsigned int index;
+    bool accExists = indexOfAccount(index, accountNumber, account);
+    
+    if (accExists == false && action != 'N') {
+        printf("The Account with number #%d doesn't exist, so you can't perform any task on it, try creating it first\n", accountNumber);
+        return;
     }
+
+    float amount;//var amount is used to deposit/withdraw/etc according the action 
+    switch (action) {
+    case 'N': {
+        if (accExists == false) {//Only create the an account with that number if it doesn't exist
+            account.push_back(BankAccount(accountNumber));
+            account.at(account.size()-1).setAccountStatus(true);
+            printf("Account #%d was created and is active\n", accountNumber);
+            break;
+        }
+        else
+        {
+            printf("Account with number #%d already exists, try creating another account with a different account number\n", accountNumber);
+            break;
+        }
+    };
+    case 'D': {
+        cout << "Enter an amount to deposit and press enter: ";
+        cin >> amount; account.at(index).Deposit(amount); break;
+    };
+    case 'W': {
+        cout << "Enter an amount to withdraw and press enter: ";
+        cin >> amount; account.at(index).Withdraw(amount); break;
+    };
+    case 'B': {
+        account.at(index).DisplayBalance(); break;
+    };
+    case 'I': {
+        cout << "Enter the interest rate to credit the account and press enter: ";
+        cin >> amount; account.at(index).setRate(amount); break;
+    };
+    case 'S': {
+        cout << "Enter the service fee you want to subtract from the account and press enter: ";
+        cin >> amount; account.at(index).Withdraw(amount); break;
+    };
+    case 'M': {
+        cout << "The account is inactive now...\n";
+        account.at(index).setAccountStatus(false); break;
+    };
+    case 'A': {
+        cout << "The account is active now...\n";
+        account.at(index).setAccountNumber(index);
+        account.at(index).setAccountStatus(true); break;
+    };
+    default: {
+        cout << "Enter a valid option" << endl; break;;
+    };
+    }
+}
+
+bool indexOfAccount(unsigned int &index, unsigned int &accountNumber,vector<BankAccount> account) {
+    
+    for (unsigned int i = 0; i < account.size(); i++) {
+        if (account.at(i).getAccountNumber() == accountNumber) {
+            index = i;
+            return true;
+        }
+    }
+    return false;
 }
